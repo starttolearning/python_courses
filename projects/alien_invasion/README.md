@@ -1,6 +1,6 @@
 # Alien Invasion
 
-Alien Invasion is a game from the book of Python Crash Course, 2nd. In this game development you will grap the fundamental building blocks of game development, like the planing, creating files and floder, refactoring, and much more.
+Alien Invasion is a game from the book of Python Crash Course, 2nd. In this game development you will grap the fundamental building blocks of game development using pygame, like the planing, designing, creating files and floder, refactoring, and much more.
 
 ![Game Display](https://s2.loli.net/2022/05/22/1EJMFaZIcRUxXie.png)
 

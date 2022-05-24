@@ -152,6 +152,7 @@ class Ship:
         self.rect = self.image.get_rect()
         # Start each new ship at the bottom center of the screen
         self.rect.midbottom = self.screen_rect.midbottom
+        self.x = float(self.rect.x)
 
     def blitme(self):
         self.screen.blit(self.image, self.rect)
@@ -265,12 +266,12 @@ class AlienInvasion:
                 if event.key == pygame.K_RIGHT:
                     # 让飞船往右边移动
                     self.ship.moving_right = True
-                if event.key == pygame.K_LEFT:
+                elif event.key == pygame.K_LEFT:
                     self.ship.moving_left = True
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_RIGHT:
                     self.ship.moving_right = False
-                if event.key == pygame.K_LEFT:
+                elif event.key == pygame.K_LEFT:
                     self.ship.moving_left = False
             # 注意：改这里--------------------------------
 ```
@@ -350,7 +351,7 @@ class Ship:
 ```
 **试一试**：运行代码看看吧，如果无法运行你可能需要花点时间找出为什么并改正它。
 
-2. 你发现没，当你在移动飞船的时候，你是不是可以将飞船移除你的视线外呀？这其实是一个bug，但是我们可以快速地解决它，来看一下。
+2. 在开始之前请你试一下：一直按住键盘的左键或者右键，看一下效果吧。你发现没，当你在移动飞船的时候，你是不是可以将飞船移除你的视线外呀？这其实是一个bug，但是我们可以快速地解决它，来看一下。
 在`ship.py`里，做如下改动：
 ```python
 
@@ -411,6 +412,7 @@ class Bullet(Sprite):
         self.color = self.settings.bullet_color
 
         # Create a bullet rect at (0,0) and then set correct position
+        # 使用Rect创建一个在（0，0）的一个元素，作为子弹
         self.rect = pygame.Rect(0, 0, self.settings.bullet_width, self.settings.bullet_height)
         self.rect.midtop = ai_game.ship.rect.midtop
 
@@ -479,10 +481,15 @@ class AlienInvasion:
         """Respond to keypress and mouse events"""
         for event in pygame.event.get():
             #上面都一样------------------------------
-            
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RIGHT:
+                    # 让飞船往右边移动
+                    self.ship.moving_right = True
+                elif event.key == pygame.K_LEFT:
+                    self.ship.moving_left = True
             # 注意：改这里--------------------------------
-            elif event.key == pygame.K_SPACE:
-                self._fire_bullet()
+                elif event.key == pygame.K_SPACE:
+                    self._fire_bullet()
             # 注意：改这里--------------------------------
     
     # 注意：改这里--------------------------------
@@ -562,20 +569,109 @@ class AlienInvasion:
             new_bullet = Bullet(self)
             self.bullets.add(new_bullet)
 ```
+**试一试**：运行代码看看吧，如果无法运行你可能需要花点时间找出为什么并改正它。
+
+最后做一些重构和代码的bug调试吧。
+
+## 重构`_check_keyup_events()`和`_check_keydown_events()`这两个方法
+
+你发现没有我们的`_check_events()`方法变得越来越臃肿了，那我们有什么好的方法可以让代码看起来简洁一点的吗？诶，对了，我们可以将管理将键盘按下的事件和键盘松开的按键分开，这样的话会让我们的`_check_events()`更加有逻辑哦，所以我们分别从两个方面进行代买重构。
+
+### 重构`_check_keyup_events()`
+
 > 修改的文件名称：`alien_invasion.py`
 ```python
 class AlienInvasion:
     def __init__(self) -> None:
         #上面都一样------------------------------
     
+    def _check_events(self):
+        """Respond to keypress and mouse events"""
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RIGHT:
+                    # 让飞船往右边移动
+                    self.ship.moving_right = True
+                elif event.key == pygame.K_LEFT:
+                    self.ship.moving_left = True
+                elif event.key == pygame.K_SPACE:
+                    self._fire_bullet()
+            
+            elif event.type == pygame.KEYUP:
+            # 注意：改这里--------------------------------
+                _check_keyup_events(event)
+            # 注意：改这里--------------------------------
+    
     # 注意：改这里--------------------------------
-    def _fire_bullet(self):
-        """Create a new bullet and add it to the bullets group."""
-        if len(self.bullets) < self.settings.bullets_allowed:
-            new_bullet = Bullet(self)
-            self.bullets.add(new_bullet)
+    def _check_keyup_events(self, event):
+        """Events handler for keyup"""
+        if event.key == pygame.K_RIGHT:
+            self.ship.moving_right = False
+        elif event.key == pygame.K_LEFT:
+            self.ship.moving_left = False
     # 注意：改这里--------------------------------
-```
-最后做一些重构和代码的bug调试吧。
 
-**试一试**：运行代码看看吧，如果无法运行你可能需要花点时间找出为什么并改正它。
+```
+
+### 重构`_check_keydown_events()`
+
+> 修改的文件名称：`alien_invasion.py`
+```python
+class AlienInvasion:
+    def __init__(self) -> None:
+        #上面都一样------------------------------
+    
+    def _check_events(self):
+        """Respond to keypress and mouse events"""
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            
+            elif event.type == pygame.KEYDOWN:
+            # 注意：改这里--------------------------------
+                self._check_keydown_events(event)
+            # 注意：改这里--------------------------------
+            
+            elif event.type == pygame.KEYUP:
+                self._check_keyup_events(event)
+
+    # 注意：改这里--------------------------------
+    def _check_keydown_events(self, event):
+        """Events handler for keydown"""
+        if event.key == pygame.K_RIGHT:
+            # 让飞船往右边移动
+            self.ship.moving_right = True
+        elif event.key == pygame.K_LEFT:
+            self.ship.moving_left = True
+        elif event.key == pygame.K_SPACE:
+            self._fire_bullet()
+    # 注意：改这里--------------------------------
+
+```
+
+经过我们对两个方法的重构，你再去看一下`_check_event()`，是不是瞬间干净多了呀！
+
+> 修改的文件名称：`alien_invasion.py`
+```python
+class AlienInvasion:
+    def __init__(self) -> None:
+        #上面都一样------------------------------
+    
+    def _check_events(self):
+        """Respond to keypress and mouse events"""
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            
+            elif event.type == pygame.KEYDOWN:
+                self._check_keydown_events(event)
+            
+            elif event.type == pygame.KEYUP:
+                self._check_keyup_events(event)
+
+```
+
+**学习标注**：在以后的学习过程中，当我们发现我们的代码量越来越多的时候，看的时候头痛脑胀的时候，那就是最好的时候可以对自己的代码进行重构了，这是一个很好的习惯也是一种很重要的技能哦。
