@@ -1,0 +1,29 @@
+# 变量和简单的数据类型
+
+## 当你运行你的第一个程序：`hello_world.py`的时候发生了什么？
+
+> 创建文件：`hello_world.py`
+```python
+print('Hello World!')
+```
+当你运行`hello_world.py`的时候你会看到什么？
+
+```python
+Hello World!
+```
+
+当文件以`.py`后缀结尾的时候，代表它是一个python文件。当你运行`hello_world.py`这个文件的时候，它通过Python解释器运行程序，它从头阅读`hello_world.py`这个文件，然后解释里面的代码输出结果。比如，当解释器看到`print`后面紧接着`()`的时候，它将在屏幕上显示括号（`()`）里面的内容。
+
+当你是有IDLE写程序的时候，IDLE通过不同的文字颜色来表示不同的内容。比如，它能识别`print()`是一个函数并且以橘色显示；它还能识别出`"Hello World!"`不是Python的关键字并且显示出了不同颜色（绿色）。这种特性叫做代码高亮显示，它非常有用，可以帮助你诊断代码。
+![](https://s2.loli.net/2022/05/23/mcblZ5RSJK9N7Aj.png)
+
+## 变量 Variable
+
+现在我们改一下`hello_world.py`，使用变量来改写。我们增加一行，改写第二行。
+> 所在文件：`hello_world.py`
+```python
+message = 'Hello World!'
+print(message)
+```
+
+当你运行`hello_world.py`的时候你又会看到什么？
