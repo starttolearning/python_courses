@@ -101,7 +101,6 @@ class AlienInvasion:
     
     def _create_fleet(self):
         # 注意：改这里--------------------------------
-        def _create_fleet(self):
         # 创建一个外星人并将这个外星人加入到aliens组里面去
         alien = Alien(self)
         self.aliens.add(alien)
@@ -397,3 +396,4 @@ class AlienInvasion:
         collisions = pygame.sprite.groupcollide(self.bullets, self.aliens, True, True)
 ```
 **试一试**：运行代码看看吧，现在你应该能够将外星人击落了，巨大的成功！
+![](https://s2.loli.net/2022/06/10/1eglCM64IuiSAf2.gif)
