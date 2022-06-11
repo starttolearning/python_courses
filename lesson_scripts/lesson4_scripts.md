@@ -11,7 +11,7 @@
 - 游戏介绍和操作说明
 - 点击`开始(START)`进行游戏
 - 增加分数系统
-
+- 自我提升系列
 
 ## 让游戏可以结束
 要是一场游戏你始终都赢，那有什么意义呢？那在这个游戏中我们怎么定义游戏结束呢？如果玩家来不及将所有的外星人击落，那么外星人就会和飞船接触，当接触的时候它也就结束了；当外星人从飞船身边落下的时候（还没来得及消灭），也判定为玩家失败，但是可以给玩家增加机会；还有就是当玩家的所有机会都用完了，这个游戏也应该结束。现在让我们完成这些游戏结束的定义吧。
@@ -71,6 +71,8 @@ class Settings:
 ```
 
 将 `GameStats`导入到`alien_invasion.py`中去
+>所在文件：`alien_invasion.py` <br/>
+
 ```python
 import sys
 
@@ -83,7 +85,7 @@ from alien import Alien
 from game_stats import GameStats
 # //////////////////////////////////////////////////////////
 ```
-初始化`GameStats`对象。初始化的位置很重要哦，我们需要在游戏基本信息加载完成后再进行初始化，并且还要在其它发生前完成初始化，要不然这些信息不回发生左右。
+初始化`GameStats`对象。初始化的位置很重要哦，我们需要在游戏基本信息加载完成后再进行初始化，并且还要在其它发生前完成初始化，要不然这些设置将不会有作用。
 
 >所在文件：`alien_invasion.py` <br/>
 所在函数：`__init__(self)`<br/>
@@ -98,12 +100,12 @@ class AlienInvasion:
         pygame.display.set_caption(self.settings.caption)
 
         # //////////////////////////////////////////////////////////
-        # Create an instance to store game statistics. 
+        # 初始化 GameStats 要在屏幕设置之后，其它设置之前
         self.stats = GameStats(self)
         # //////////////////////////////////////////////////////////       
 ```
 
-我们需要在每次发生碰撞的时候将飞船的生命值减少`1`，清空所有的alien和bullets集合，重新创建新的外星队伍，将飞居中。我们在`alien_invasion.py`里面通过建立一个新的函数来专门干这件事情，函数名叫做`_ship_hit()`。
+我们需要在每次发生碰撞的时候将飞船的生命值减少`1`，清空所有的`alien`和`bullets`集合，重新创建新的外星队伍，将飞居中。我们在`alien_invasion.py`里面通过建立一个新的函数来专门干这件事情，函数名叫做`_ship_hit()`。
 
 >所在文件：`alien_invasion.py` <br/>
 所在函数：`_ship_hit(self)`<br/>
@@ -128,7 +130,8 @@ class AlienInvasion:
         sleep(0.5)    
     # //////////////////////////////////////////////////////////       
 ```
-你会体会到我们之前将很多独立功能的代码写在一个函数里面的好处啦，我们只需要调用就可以了，不需要重新再去写那些逻辑，但是你也发现了我们需要重新来定义让飞船居中这件事情，即`center_ship()`这个函数我们还没写，快点来完成吧。
+你会体会到我们之前将很多独立功能的代码写在一个函数里面的好处啦，在这儿我们只需要调用他们就可以了，不需要再去重写那些逻辑，但是你也发现了我们需要重新来定义让飞船居中这件事情，即`center_ship()`这个函数我们还没写，快点来完成吧。
+
 >所在文件：`ship.py` <br/>
 所在函数：`center_ship(self)`<br/>
 ```python
@@ -141,6 +144,7 @@ class Ship:
     # //////////////////////////////////////////////////////////       
 ```
 最后我们将之前测试用的`print('Ship hit!!!')`替换成`_ship_hit()`就可以啦。
+
 >所在文件：`alien_invasion.py` <br/>
 所在函数：`_update_aliens(self)`<br/>
 ```python
@@ -154,13 +158,15 @@ class AlienInvasion:
         # 检测飞船和外星人的碰撞
         if pygame.sprite.spritecollideany(self.ship, self.aliens):
         # //////////////////////////////////////////////////////////
+            # print('Ship hit!!!')
             self._ship_hit()
         # //////////////////////////////////////////////////////////
 ```
-**试一试**：运行代码看看吧，现在你能发现当任意一个外星人和飞船发生碰撞的时候，游戏会停止并且重新开始。对了当你在测试的时候，你要等外星人落下来，太费时间了，你可以调整一下参数哦。
+**试一试**：运行代码看看吧，现在你能发现当任意一个外星人和飞船发生碰撞的时候，游戏会停止并且重新开始。对了当你在测试的时候，你要等外星人落下来，太费时间了，你可以调整一下参数哦（这些改变在`settings.py`里哦，你可以找一下）。
 
 ### 外星人到达屏幕底部
-如果外星人到达屏幕的底部我们也应该结束游戏才对，如何实现这件事情呢？我们来看一下。
+我们再来处理第二种情况，如果外星人到达屏幕的底部我们也应该结束游戏才对，如何实现这件事情呢？我们来看一下。
+
 我们现在`alien_invasion.py`文件里面增加一个函数来实现这个功能，首先获取屏幕的大小信息，通过一个循环来检测任意一个外星人的`alien.rect.bottom`超出`screen_rect.bottom`，如果为真则执行和上面飞船和外星人碰撞后一样事情`_ship_hit()`。
 
 最后你还需要在`_update_aliens()`中调用`_check_aliens_bottom`这个函数。
@@ -170,9 +176,17 @@ class AlienInvasion:
 ```python
 class AlienInvasion:
     def _update_aliens(self):
-        # ////////////////////上面的一致//////////////////////////
+        """更新所有alien的位置信息"""
+        self._check_fleet_edges()
+        self.aliens.update()
+
+        # 检测飞船和外星人的碰撞
+        if pygame.sprite.spritecollideany(self.ship, self.aliens):
+            self._ship_hit()
+        # //////////////////////////////////////////////////////
         self._check_aliens_bottom()
-    
+        # //////////////////////////////////////////////////////
+
     # //////////////////////////////////////////////////////////
     def _check_aliens_bottom(self):
         """检查外星人是否到达屏幕的最底部"""
@@ -233,7 +247,7 @@ class AlienInvasion:
     # //////////////////////////////////////////////////////////       
 ```
 
-最后我们还要让我们的游戏正的停下来才行，所以我们需要甄别出当`game_active`为`True`的时候到底该运行那些指令呢，不错你想一下我们的游戏原理就会明白，我们只要在`game_active`为`True`的时候才对屏幕刷新，而当`game_active`为`False`的时候就不刷新了，也不去执行其它的内容了。
+最后我们还要让我们的游戏正的停下来才行，所以我们需要甄别出当`game_active`为`True`的时候到底该运行那些指令呢，不错你想一下我们的游戏原理就会明白，我们只要在`game_active`为`True`的时候才对`ship`、`bullets`、`aliens`这些图形元素刷新，而当`game_active`为`False`的时候就不刷新了，也不去执行其它的内容了。所以我们用一个判断语句既可以控制啦。
 
 >所在文件：`alien_invasion.py` <br/>
 所在函数：`run_game(self)`<br/>
@@ -255,6 +269,7 @@ class AlienInvasion:
 好了，现在我们的游戏能够合乎逻辑的结束了，这样看起来它更像是一个完整的游戏啦，但是你会发现它还是和我们平时完的游戏有点区别，它还没有足够都的引导，接下来我们让它更加亲近玩家一点点吧。
 
 ## 游戏介绍和操作说明
+
 你肯定有玩过游戏是吧？在你进入游戏的时候它都会给你一些提醒和说明，至少要知道这个是个什么游戏、它是怎么玩的等等的必要说明，有了这些信息，所有的玩家都知道该怎么操作啦，而我们的外星大战游戏现在就缺少这些东西，我们需要增加这些必要的说明，接下来我们先完成它。
 
 几个常见的游戏界面示例：
@@ -262,9 +277,9 @@ class AlienInvasion:
 ![](https://s2.loli.net/2022/06/10/jzK4vbCpxHeq3rT.jpg)
 
 我们先来设计一下我们的界面吧，我们尽量简单一点，不要太复杂的，你知道怎么弄就是了，在真正的游戏开发中，界面设计由美工部门花大量的时间来完成的。就像下面这个样子吧...
+![](https://s2.loli.net/2022/06/10/71lLUBeZmiuvz6x.jpg)
 
 ### 将游戏的说明指令放到界面上
-![](https://s2.loli.net/2022/06/10/71lLUBeZmiuvz6x.jpg)
 
 我们首先在项目文件目录下创建一个文件名叫做`game_info.py`来管理和游戏介绍信息相关的所有东西，到现在为止你应该感受到了为了让代码的复杂度降低我们尽量将有关系的代码写到一个文件里面，这样逻辑上要简单很多哦。
 
@@ -327,26 +342,27 @@ def _update_screen(self):
 ![](https://s2.loli.net/2022/06/10/t1F8MDmZsQfveNl.png)
 
 首先我们对这个按钮的一些必要参数进行设定，在`game_info.py`这个文件里面，我们需要添加如下这些代码。
+
 >所在文件：`game_info.py` <br/>
 所在函数：`__init__(self)`<br/>
 ```python
 class GameInfo:
     def __init__(self, ai_game, msg) -> None:
         #1 //////////////////////////////////////////////////////////
-        # Set the dimensions and properties of the button.
+        # 设置按钮的大小、颜色、字体等属性
         self.width, self.height = 360, 112
         self.button_color = (151, 195, 231)
         self.text_color = (32, 58, 102)
         self.font = pygame.font.SysFont(None, 80)
 
-        # Build the button's rect object and center it.
+        # 创建按钮的外观
         self.rect = pygame.Rect(653, 368, self.width, self.height)
         self._prep_msg(msg)        
         # //////////////////////////////////////////////////////////            
     
     #2 //////////////////////////////////////////////////////////
     def _prep_msg(self, msg):
-        """Turn msg into a rendered image and center text on the button."""
+        """将文本转化成图形."""
         self.msg_image = self.font.render(msg, True, self.text_color,self.button_color)
         self.msg_image_rect = self.msg_image.get_rect()
         self.msg_image_rect.center = self.rect.center
@@ -354,7 +370,7 @@ class GameInfo:
 
     #3 //////////////////////////////////////////////////////////
     def draw_button(self):
-        # Draw blank button and then draw message.
+        # 将按钮放置在屏幕上.
         self.screen.fill(self.button_color, self.rect)
         self.screen.blit(self.msg_image, self.msg_image_rect)
     # //////////////////////////////////////////////////////////
@@ -565,6 +581,9 @@ class AlienInvasion:
         pygame.display.flip()
 ```
 ### 当击落外星人的时候把分数增加
+
+我们先来定义当射击一个外星人的时候得多少分吧。
+
 >所在文件：`Settings.py` <br/>
 所在函数：`__init__(self)`<br/>
 ```python
@@ -586,6 +605,7 @@ class Settings:
         # //////////////////////////////////////////////////////////
 ```
 
+每射击一个外星人把分数累加起来。
 
 >所在文件：`alien_invasion.py` <br/>
 所在函数：`__init__(self)`<br/>
@@ -609,10 +629,11 @@ class AlienInvasion:
 ```
 
 ### 重置分数
+每次重新开始游戏的时候你的分数应该是从0开始的才对，所以我们在点击了开始的按钮后，还需要把初始的分数设置为0，要不然你将看到每次游戏分数都在上一次的基础上累加。
+
 >所在文件：`alien_invasion.py` <br/>
 所在函数：`_check_play_button(self)`<br/>
 ```python
-
 class AlienInvasion:
     def _check_play_button(self, mouse_pos):
         """Start a new game when the player clicks Play."""
@@ -629,13 +650,16 @@ class AlienInvasion:
             self._create_fleet()
             self.ship.center_ship()
             # 隐藏鼠标
-            pygame.mouse.set_visible(False)
-        
+            pygame.mouse.set_visible(False)   
 ```
 
 ## 自我提升：游戏升级
+本部分的内容是对这个游戏的进一步开发，它包括了在一个正常的游戏中应该考虑的要素，当你在实际开发的过程中有这些需求和思考是非常重要的，让我们来看一下还有哪些部分可以提升吧。
 
 ### 修改速度
+如果从始至终都是一样的速度，似乎没有什么难度和挑战，所以我们让它有改变速度的机制，这样可以更加有趣。
+
+我们首先将`settings.py`里面增加速度变化的系数，然后做一些重构，将和速度相关的放在一个函数`initialize_dynamic_settings`中一起处理。
 >所在文件：`settings.py` <br/>
 所在函数：`__init__(self)`<br/>
 ```python
@@ -663,7 +687,10 @@ class Settings:
         self.fleet_direction = 1
     # //////////////////////////////////////////////////////////
 ```
-你可以参考修改后的`Settings`对象的代码。
+因为有些地方删除有些地方增加了代码，你可以参考修改后的`Settings`对象的代码。
+
+>所在文件：`settings.py` <br/>
+所在函数：`__init__(self)`<br/>
 ```python
 class Settings:
     """A class to store all settings for Alien Invasion"""
@@ -705,6 +732,8 @@ class Settings:
 ```
 
 ### 增加速度
+速度增加的时候，除了飞船的速度外，子弹和外星人的速度都应该增加。
+
 >所在文件：`settings.py` <br/>
 所在函数：`increase_speed(self)`<br/>
 ```python
@@ -719,7 +748,7 @@ class Settings:
     # //////////////////////////////////////////////////////////
 ```
 
-重构`_update_bullets`，将碰撞独立出来，写一个新的函数`_check_bullet_alien_collisions`
+为了后面方便修改和代码的逻辑严密，我们重构一下`_update_bullets`，将碰撞独立出来，写一个新的函数`_check_bullet_alien_collisions`。
 
 >所在文件：`alien_invasion.py` <br/>
 所在函数：`_update_bullets`和`_check_bullet_alien_collisions(self)`<br/>
@@ -792,7 +821,8 @@ class AlienInvasion:
             self.settings.increase_speed()
 ```
 
-### 随着难度增加，如何增加分值呢
+### 随着难度增加，如何增加每次射击分值呢
+
 >所在文件：`settings.py` <br/>
 所在函数：`increase_speed`<br/>
 ```python
